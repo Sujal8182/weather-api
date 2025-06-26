@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather App</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #74ebd5, #9face6);
+      --text: #1e1e1e;
+      --card-bg: #ffffffee;
+      --input-bg: #ffffff;
+      --detail-bg: #f0f9ff;
+    }
+
+    body.dark {
+      --bg: #12121a;
+      --text: #f3f3f3;
+      --card-bg: #2c2c3e;
+      --input-bg: #2f2f40;
+      --detail-bg: #3a3a50;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.4s ease;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      margin-bottom: 1rem;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+    }
+
+    .dark-toggle {
+      background: var(--detail-bg);
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text);
+      transition: 0.3s ease;
+    }
+
+    .search-container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .search-container input {
+      flex: 1;
+      padding: 14px 18px;
+      font-size: 1rem;
+      border: none;
+      outline: none;
+      background-color: var(--input-bg);
+      color: var(--text);
+    }
+
+    .search-container button {
+      padding: 14px 20px;
+      background: #008CBA;
+      color: white;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .search-container button:hover {
+      background-color: #0073a1;
+    }
+
+    .weather-card {
+      display: none;
+      flex-direction: column;
+      gap: 1rem;
+      background-color: var(--card-bg);
+      padding: 2rem 1.5rem;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 1s ease forwards;
+      text-align: center;
+    }
+
+    .weather-card.active {
+      display: flex;
+    }
+
+    .weather-card h2 {
+      font-size: clamp(1.25rem, 2vw, 1.75rem);
+    }
+
+    .weather-card p {
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+    }
+
+    .icon img {
+      width: 80px;
+      transition: transform 0.3s ease;
+    }
+
+    .icon img:hover {
+      transform: scale(1.1);
+    }
+
+    .weather-detail, .extra-detail {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-top: 10px;
+    }
+
+    .weather-detail div,
+    .extra-detail div {
+      background: var(--detail-bg);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s;
+    }
+
+    .weather-detail div:hover,
+    .extra-detail div:hover {
+      transform: scale(1.04);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-bar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>🌦️ Weather App</h1>
+    <button class="dark-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+  </div>
+
+  <div class="search-container">
+    <input type="text" placeholder="Enter city name..." id="search" />
+    <button onclick="weather()">Search</button>
+  </div>
+
+  <div class="weather-card" id="weather-card"></div>
+
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+    }
+
+    function weather() {
+      const city = document.getElementById("search").value.trim();
+      const card = document.getElementById("weather-card");
+      if (!city) return alert("Please enter a city name.");
+
+      fetch(`https://api.weatherapi.com/v1/current.json?key=5396e72fdc854f2b927171708252606&q=${city}&aqi=no`)
+        .then(res => res.json())
+        .then(res => {
+          const { name, country, localtime } = res.location;
+          const {
+            temp_c, humidity, wind_kph, condition,
+            feelslike_c, pressure_mb, uv, vis_km, gust_kph
+          } = res.current;
+
+          card.innerHTML = `
+            <h2>${name}, ${country}</h2>
+            <p><em>${localtime}</em></p>
+            <div class="icon">
+              <img src="${condition.icon}" alt="${condition.text}" />
+            </div>
+            <p>${condition.text}</p>
+
+            <div class="weather-detail">
+              <div><strong>🌡️ Temp:</strong> ${temp_c}°C</div>
+              <div><strong>🤔 Feels Like:</strong> ${feelslike_c}°C</div>
+              <div><strong>💧 Humidity:</strong> ${humidity}%</div>
+              <div><strong>💨 Wind:</strong> ${wind_kph} km/h</div>
+            </div>
+
+            <div class="extra-detail">
+              <div><strong>🔽 Pressure:</strong> ${pressure_mb} mb</div>
+              <div><strong>🔆 UV Index:</strong> ${uv}</div>
+              <div><strong>👀 Visibility:</strong> ${vis_km} km</div>
+              <div><strong>🌬️ Gusts:</strong> ${gust_kph} km/h</div>
+            </div>
+          `;
+          card.classList.add("active");
+          document.getElementById("search").value = "";
+        })
+        .catch(() => {
+          card.innerHTML = `<p style="color:red;">City not found. Please try again.</p>`;
+          card.classList.add("active");
+        });
+    }
+  </script>
+</body>
+</html>
